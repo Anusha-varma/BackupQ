@@ -9,6 +9,7 @@ interface QueueContextType {
   isInQueue: boolean;
   queuePosition: number | null;
   estimatedWaitTime: number;
+  joinedQueueFlag:boolean,
   joinQueue: () => void;
   leaveQueue: () => void;
   simulateTrafficSpike: () => void;
@@ -24,14 +25,22 @@ export function QueueProvider({ children }: { children: React.ReactNode }) {
   const [queuePosition, setQueuePosition] = useState<number | null>(null);
   const [estimatedWaitTime, setEstimatedWaitTime] = useState<number>(0);
   const queueIntervalRef = useRef<NodeJS.Timeout | null>(null);
-
+  const [joinedQueueFlag, setJoinedQueueFlag] = useState(false);
+  useEffect(() => {
+    if (isInQueue && estimatedWaitTime <=1) {
+      toast("Payment processed",{
+        description: "Your payment has been processed.",
+        className:"text-green border bg-white"
+      });
+    }
+  }, [isInQueue, estimatedWaitTime]);
   const updateQueueStatus = (count: number) => {
     if (count < 500) setQueueStatus('low');
     else if (count < 1000) setQueueStatus('medium');
     else if (count < 1500) setQueueStatus('high');
     else setQueueStatus('critical');
   };
-
+  
   const updateEstimatedWaitTime = (position: number, status: QueueStatus) => {
     let baseTimePerPosition = 10;
     switch (status) {
@@ -85,7 +94,6 @@ export function QueueProvider({ children }: { children: React.ReactNode }) {
   };
 
   const joinQueue = async () => {
-    // Local state updates (as already implemented)
     setIsInQueue(true);
     const newUserCount = userCount + 1;
     const position = newUserCount;
@@ -94,7 +102,6 @@ export function QueueProvider({ children }: { children: React.ReactNode }) {
     updateQueueStatus(newUserCount);
     updateEstimatedWaitTime(position, queueStatus);
   
-    // Update Supabase: Mark user in_queue = true
     const user = await supabase.auth.getUser();
     const userId = user.data.user?.id;
   
@@ -103,27 +110,24 @@ export function QueueProvider({ children }: { children: React.ReactNode }) {
       .update({ in_queue: true, queue_position: position, joined_at: new Date().toISOString() })
       .eq('id', userId);
   
-    // Optional: Insert into queue_history
     await supabase.from('queue_history').insert({
       user_id: userId,
       joined_at: new Date().toISOString(),
       initial_position: position,
-      status: 'joined'
+      status: 'joined',
     });
   
-    // Update system_metrics (manual increment, or just insert a snapshot)
     await supabase.from('system_metrics').insert({
       timestamp: new Date().toISOString(),
       user_count: newUserCount,
       queue_length: newUserCount,
-      traffic_status: queueStatus
+      traffic_status: queueStatus,
     });
   
-    // LocalStorage
     localStorage.setItem('queueData', JSON.stringify({
       isInQueue: true,
       position,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     }));
   
     toast("Joined Queue", {
@@ -131,8 +135,11 @@ export function QueueProvider({ children }: { children: React.ReactNode }) {
       duration: 5000,
     });
   
+    setJoinedQueueFlag(true); 
+  
     resumeQueueCountdown(position);
   };
+  
   const countdownRef = useRef<NodeJS.Timeout | null>(null);
   const [countdown, setCountdown] = useState<string>("");
   
@@ -234,7 +241,8 @@ export function QueueProvider({ children }: { children: React.ReactNode }) {
       joinQueue,
       leaveQueue,
       simulateTrafficSpike,
-      simulateTrafficDrop
+      simulateTrafficDrop,
+      joinedQueueFlag,
     }}>
       {children}
     </QueueContext.Provider>

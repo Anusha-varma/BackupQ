@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState,useEffect } from 'react';
 import { useQueue } from '../../context/QueueContext';
 import { useToast } from '../../hooks/use-toast';
 import { Button } from '../../components/ui/button';
@@ -15,7 +15,6 @@ import {
 import {
   AlertCircle,
   CheckCircle,
-  Clock,
   Info,
   CreditCard,
 } from 'lucide-react';
@@ -26,9 +25,17 @@ import {
 } from '../../components/ui/alert';
 import { Switch } from '../../components/ui/switch';
 
+
 const PaymentForm = () => {
-  const { queueStatus, isInQueue } = useQueue();
+  const { queueStatus, joinedQueueFlag } = useQueue();
   const { toast } = useToast();
+
+  useEffect(() => {
+    if (joinedQueueFlag) {
+      setIsOfflineMode(true);
+      setPaymentMethod('offline');
+    }
+  }, [joinedQueueFlag]);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -150,203 +157,181 @@ const PaymentForm = () => {
         />
       </div>
 
-      {isInQueue ? (
-        <Alert className="mb-6">
-          <Clock className="h-4 w-4" />
-          <AlertTitle>You're in the queue</AlertTitle>
-          <AlertDescription>
-            Please wait for your turn to access the payment form.
+      {showQueueWarning && !isOfflineMode && (
+        <Alert variant="destructive" className="mb-6 bg-red-200">
+          <AlertCircle className=" h-4 w-4" />
+          <AlertTitle>High Traffic Alert</AlertTitle>
+          <AlertDescription className="space-y-2">
+            <p>
+              The system is experiencing high traffic which might affect
+              payment processing.
+            </p>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsOfflineMode(true)}
+              className="w-full bg-[#951515] hover:bg-[#c85858] text-white"
+            >
+              Switch to Offline Mode
+            </Button>
           </AlertDescription>
         </Alert>
-      ) : (
-        <>
-          {showQueueWarning && !isOfflineMode && (
-            <Alert variant="destructive" className="mb-6 bg-red-200">
-              <AlertCircle className="  h-4 w-4" />
-              <AlertTitle>High Traffic Alert</AlertTitle>
-              <AlertDescription className="space-y-2">
-                <p>
-                  The system is experiencing high traffic which might affect
-                  payment processing.
-                </p>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setIsOfflineMode(true)}
-                  className='w-full bg-[#951515] hover:bg-[#c85858] text-white'
-                >
-                  Switch to Offline Mode
-                </Button>
-              </AlertDescription>
-            </Alert>
-          )}
+      )}
 
-          {isOfflineMode && (
-            <Alert className="mb-6 bg-blue-50 border-blue-200">
-              <Info className="h-4 w-4 text-blue-500" />
-              <AlertTitle className="text-blue-700">
-                Offline Mode Enabled
-              </AlertTitle>
-              <AlertDescription className="text-blue-600">
-                Your payment intent will be saved locally and processed when the
-                system load decreases. No penalties will be applied for deadline
-                submissions.
-              </AlertDescription>
-            </Alert>
-          )}
+      {isOfflineMode && (
+        <Alert className="mb-6 bg-blue-50 border-blue-200">
+          <Info className="h-4 w-4 text-blue-500" />
+          <AlertTitle className="text-blue-700">Offline Mode Enabled</AlertTitle>
+          <AlertDescription className="text-blue-600">
+            Your payment intent will be saved locally and processed when the
+            system load decreases. No penalties will be applied for deadline
+            submissions.
+          </AlertDescription>
+        </Alert>
+      )}
 
-          {showSuccess && (
-            <Alert className="mb-6 bg-green-50 border-green-200">
-              <CheckCircle className="h-4 w-4 text-green-500" />
-              <AlertTitle className="text-green-700">
-                {isOfflineMode ? 'Payment Intent Saved' : 'Payment Successful'}
-              </AlertTitle>
-              <AlertDescription className="text-green-600">
-                {isOfflineMode
-                  ? 'Your payment intent has been recorded. You’ll receive a confirmation once processed.'
-                  : 'Your payment has been processed successfully. A receipt will be sent to your email.'}
-              </AlertDescription>
-            </Alert>
-          )}
+      {showSuccess && (
+        <Alert className="mb-6 bg-green-50 border-green-200">
+          <CheckCircle className="h-4 w-4 text-green-500" />
+          <AlertTitle className="text-green-700">
+           Payment Intent Saved
+          </AlertTitle>
+          <AlertDescription className="text-green-600">
+          Your payment intent has been recorded. You’ll receive a confirmation once processed.
+          </AlertDescription>
+        </Alert>
+      )}
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Payment Form</CardTitle>
-              <CardDescription>
-                {isOfflineMode
-                  ? 'Submit your payment intent to be processed later'
-                  : 'Make a secure payment for your service'}
-              </CardDescription>
-            </CardHeader>
+      <Card>
+        <CardHeader>
+          <CardTitle>Payment Form</CardTitle>
+          <CardDescription>
+            {isOfflineMode
+              ? 'Submit your payment intent to be processed later'
+              : 'Make a secure payment for your service'}
+          </CardDescription>
+        </CardHeader>
 
-            <form onSubmit={handleSubmit}>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="name">Full Name</Label>
-                    <Input
-                      id="name"
-                      name="name"
-                      placeholder="John Doe"
-                      value={formData.name}
-                      onChange={handleInputChange}
-                      required
-                    />
+        <form onSubmit={handleSubmit}>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Full Name</Label>
+                <Input
+                  id="name"
+                  name="name"
+                  placeholder="John Doe"
+                  value={formData.name}
+                  onChange={handleInputChange}
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="email">Email Address</Label>
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  placeholder="john@example.com"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="amount">Payment Amount</Label>
+                <Input
+                  id="amount"
+                  name="amount"
+                  type="number"
+                  placeholder="1000"
+                  value={formData.amount}
+                  onChange={handleInputChange}
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="reference">Reference Number (Optional)</Label>
+                <Input
+                  id="reference"
+                  name="reference"
+                  placeholder="e.g., Invoice #12345"
+                  value={formData.reference}
+                  onChange={handleInputChange}
+                />
+              </div>
+
+              <div className="mt-4 space-y-4">
+                <div className="bg-blue-50 p-4 rounded-md border border-blue-100">
+                  <div className="flex items-center mb-3">
+                    <CreditCard className="mr-2 h-5 w-5 text-blue-500" />
+                    <h3 className="font-medium text-blue-700">Payment Details</h3>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email Address</Label>
-                    <Input
-                      id="email"
-                      name="email"
-                      type="email"
-                      placeholder="john@example.com"
-                      value={formData.email}
-                      onChange={handleInputChange}
-                      required
-                    />
-                  </div>
+                  <div className="space-y-3">
+                    <div className="space-y-2">
+                      <Label htmlFor="cardNumber">Card Number</Label>
+                      <Input
+                        id="cardNumber"
+                        name="cardNumber"
+                        placeholder="1234 5678 9012 3456"
+                        value={formData.cardNumber}
+                        onChange={handleInputChange}
+                        maxLength={19}
+                        className="font-mono"
+                      />
+                    </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="amount">Payment Amount</Label>
-                    <Input
-                      id="amount"
-                      name="amount"
-                      type="number"
-                      placeholder="1000"
-                      value={formData.amount}
-                      onChange={handleInputChange}
-                      required
-                    />
-                  </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-2">
+                        <Label htmlFor="expiryDate">Expiry Date</Label>
+                        <Input
+                          id="expiryDate"
+                          name="expiryDate"
+                          placeholder="MM/YY"
+                          value={formData.expiryDate}
+                          onChange={handleInputChange}
+                          maxLength={5}
+                        />
+                      </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="reference">
-                      Reference Number (Optional)
-                    </Label>
-                    <Input
-                      id="reference"
-                      name="reference"
-                      placeholder="e.g., Invoice #12345"
-                      value={formData.reference}
-                      onChange={handleInputChange}
-                    />
-                  </div>
-
-                  {!isOfflineMode && (
-                    <div className="mt-4 space-y-4">
-                      <div className="bg-blue-50 p-4 rounded-md border border-blue-100">
-                        <div className="flex items-center mb-3">
-                          <CreditCard className="mr-2 h-5 w-5 text-blue-500" />
-                          <h3 className="font-medium text-blue-700">
-                            Payment Details
-                          </h3>
-                        </div>
-
-                        <div className="space-y-3">
-                          <div className="space-y-2">
-                            <Label htmlFor="cardNumber">Card Number</Label>
-                            <Input
-                              id="cardNumber"
-                              name="cardNumber"
-                              placeholder="1234 5678 9012 3456"
-                              value={formData.cardNumber}
-                              onChange={handleInputChange}
-                              maxLength={19}
-                              className="font-mono"
-                            />
-                          </div>
-
-                          <div className="grid grid-cols-2 gap-3">
-                            <div className="space-y-2">
-                              <Label htmlFor="expiryDate">Expiry Date</Label>
-                              <Input
-                                id="expiryDate"
-                                name="expiryDate"
-                                placeholder="MM/YY"
-                                value={formData.expiryDate}
-                                onChange={handleInputChange}
-                                maxLength={5}
-                              />
-                            </div>
-
-                            <div className="space-y-2">
-                              <Label htmlFor="cvv">CVV</Label>
-                              <Input
-                                id="cvv"
-                                name="cvv"
-                                type="password"
-                                placeholder="123"
-                                value={formData.cvv}
-                                onChange={handleInputChange}
-                                maxLength={4}
-                              />
-                            </div>
-                          </div>
-                        </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="cvv">CVV</Label>
+                        <Input
+                          id="cvv"
+                          name="cvv"
+                          type="password"
+                          placeholder="123"
+                          value={formData.cvv}
+                          onChange={handleInputChange}
+                          maxLength={4}
+                        />
                       </div>
                     </div>
-                  )}
+                  </div>
                 </div>
-              </CardContent>
+              </div>
+            </div>
+          </CardContent>
 
-              <CardFooter>
-                <Button
-                  type="submit"
-                  className="w-full bg-[#596235] text-white"
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting
-                    ? 'Processing...'
-                    : isOfflineMode
-                    ? 'Save Payment Intent'
-                    : 'Submit Payment'}
-                </Button>
-              </CardFooter>
-            </form>
-          </Card>
-        </>
-      )}
+          <CardFooter>
+            <Button
+              type="submit"
+              className="w-full bg-[#596235] text-white"
+              disabled={isSubmitting}
+            >
+              {isSubmitting
+                ? 'Processing...'
+                : isOfflineMode
+                ? 'Save Payment Intent'
+                : 'Submit Payment'}
+            </Button>
+          </CardFooter>
+        </form>
+      </Card>
     </div>
   );
 };

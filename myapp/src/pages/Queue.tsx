@@ -1,4 +1,4 @@
-import React from 'react';
+import {useEffect} from 'react';
 import Navbar from "../components/layout/Navbar";
 import Footer from "../components/layout/Footer";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
@@ -8,10 +8,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs"
 import { useQueue } from "../context/QueueContext";
 import { AlertCircle, CheckCircle, Clock, Users } from "lucide-react";
 import PaymentForm from "../components/payment/PaymentForm";
-import PaymentOptions from '../components/payment/PaymentOptions';
+import OnlinePay from '../components/payment/OnlinePay';
+import { useToast } from '../hooks/use-toast';
 const Queue = () => {
   const { userCount, queueStatus, isInQueue, queuePosition, estimatedWaitTime, joinQueue, leaveQueue } = useQueue();
-
+  const {toast}=useToast();
+ 
   // Calculate congestion level (0-100)
   const congestionLevel = Math.min(100, Math.floor((userCount / 2000) * 100));
 
@@ -54,11 +56,9 @@ const Queue = () => {
           
           <Tabs defaultValue="virtual-queue" className="mt-8 mb-5">
             <TabsList className="grid grid-cols-4">
-              <TabsTrigger value="virtual-queue" className="text-sm sm:text-base hover:scale-105 hover:text-white">Virtual Queue</TabsTrigger>
-              <TabsTrigger value="payment-options" className="text-sm sm:text-base hover:scale-105 hover:text-white">Payment Options</TabsTrigger>
-              <TabsTrigger value="payment-form" className="text-sm sm:text-base hover:scale-105 hover:text-white">Payment Form</TabsTrigger>
-              <TabsTrigger value="active-users" className="text-sm sm:text-base hover:scale-105 hover:text-white">Active Users</TabsTrigger>
-            </TabsList>
+              <TabsTrigger value="virtual-queue" className="text-sm sm:text-base font-bold hover:scale-105 hover:text-white">Virtual Queue</TabsTrigger>
+              <TabsTrigger value="payment-form" className="text-sm sm:text-base font-bold hover:scale-105 hover:text-white">Online Payment</TabsTrigger>
+         </TabsList>
             
             <TabsContent value="virtual-queue" className="mt-6">
               <Card className="border shadow-lg animate-float hover:shadow-xl transition-all bg-white/80 backdrop-blur-sm">
@@ -138,6 +138,8 @@ const Queue = () => {
                       >
                         Leave Queue
                       </Button>
+                      <PaymentForm/>
+
                     </div>
                   ) : (
                     <>
@@ -178,20 +180,7 @@ const Queue = () => {
                 </CardContent>
               </Card>
             </TabsContent>
-            
-            <TabsContent value="payment-options" className="mt-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Payment Options</CardTitle>
-                  <CardDescription>Choose from available payment methods</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                   <PaymentOptions/>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
+        
             
             <TabsContent value="payment-form" className="mt-6">
               <Card>
@@ -200,22 +189,7 @@ const Queue = () => {
                   <CardDescription>Fill out the form to complete your payment</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <PaymentForm />
-                </CardContent>
-              </Card>
-            </TabsContent>
-            
-            <TabsContent value="active-users" className="mt-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Active Users</CardTitle>
-                  <CardDescription>Current system usage statistics</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <p>Active users: {userCount}</p>
-                    <p>System status: {queueStatus}</p>
-                  </div>
+                  <OnlinePay/>
                 </CardContent>
               </Card>
             </TabsContent>

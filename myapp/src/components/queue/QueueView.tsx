@@ -32,18 +32,7 @@ const QueueView = () => {
             <span>{userCount} active users</span>
           </div>
         </div>
-
-        {isInQueue && (
-          <div className="bg-blue-50 p-4 rounded-md mb-4">
-            <h3 className="font-medium text-blue-700 mb-2">You are in queue</h3>
-            {position && (
-              <div className="flex items-center justify-between mb-2">
-                <span>Your position:</span>
-                <span className="font-bold">{position}</span>
-              </div>
-            )}
-          </div>
-        )}
+       
 
         <div className="flex gap-2 mt-4">
           <Button onClick={spike} variant="secondary" className="flex-1">Spike</Button>
