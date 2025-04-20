@@ -44,4 +44,11 @@ npm run dev
 ```
 This will start the development server and open the app at `http://localhost:8080`.
 
+## Run Tests
+```bash
+npm test
+```
+```bash
+npm run test:ui
+```
 ## Demo Video Link: https://vimeo.com/1077076810/061780248f?share=copy
